@@ -64,24 +64,22 @@ function create() {
     gameOverText = this.add.text(400, 200, 'Game Over', { fontSize: '64px', fill: '#FF0000', align: 'center' });
     gameOverText.setOrigin(0.5);
     gameOverText.setVisible(false);
-    
     finalScoreText = this.add.text(400, 300, '', { fontSize: '32px', fill: '#FFF', align: 'center' });
     finalScoreText.setOrigin(0.5);
     finalScoreText.setVisible(false);
 
     // 메인 메뉴 버튼 생성
-    startButton = this.add.text(400, 250, '게임 시작', { fontSize: '32px', fill: '#00FF00' });
+    startButton = this.add.text(400, 250, '게임시작', { fontSize: '32px', fill: '#00FF00' });
     startButton.setOrigin(0.5);
     startButton.setInteractive();
     startButton.on('pointerdown', startGame, this);
-
     creditsButton = this.add.text(400, 350, '제작자', { fontSize: '32px', fill: '#00FF00' });
     creditsButton.setOrigin(0.5);
     creditsButton.setInteractive();
     creditsButton.on('pointerdown', showCredits, this);
 
     // 제작자 정보 텍스트
-    creditsText = this.add.text(400, 300, '제작자: 박예찬 (red6855)\n소속: 울산과학대학교\n제작일: 2024-09-02 ver 0.1', 
+    creditsText = this.add.text(400, 300, '제작자: 박예찬 (red6855)', 
         { fontSize: '24px', fill: '#FFF', align: 'center' });
     creditsText.setOrigin(0.5);
     creditsText.setVisible(false);
@@ -94,7 +92,7 @@ function create() {
     backButton.setVisible(false);
 
     // 일시 정지 메뉴 요소 생성
-    pauseText = this.add.text(400, 200, '일시 정지', { fontSize: '48px', fill: '#FFF' });
+    pauseText = this.add.text(400, 200, '일시 정지', { fontSize: '48px', fill: 'red' });
     pauseText.setOrigin(0.5);
     pauseText.setVisible(false);
 
@@ -107,7 +105,7 @@ function create() {
     quitButton = this.add.text(400, 400, '나가기', { fontSize: '32px', fill: '#00FF00' });
     quitButton.setOrigin(0.5);
     quitButton.setInteractive();
-    quitButton.on('pointerdown', restartGame, this);  // quitToMainMenu 대신 restartGame 사용
+    quitButton.on('pointerdown', quitToMainMenu, this);
     quitButton.setVisible(false);
 
     // ESC 키 입력 처리
@@ -117,6 +115,7 @@ function create() {
     finalScoreText.setDepth(1);
     continueButton.setDepth(1);
     quitButton.setDepth(1);
+    pauseText.setDepth(1);
 
     showMainMenu.call(this);
 }
@@ -164,7 +163,7 @@ function createBricks() {
         for (let j = 0; j < 4; j++) {
             let brick = this.add.rectangle(i * 70 + 85, j * 30 + 100, 60, 20, 0x00FF00);
             bricks.add(brick);
-            this.physics.add.existing(brick, true);  // true를 추가하여 정적 물체로 설정
+            this.physics.add.existing(brick, true);
         }
     }
 }
@@ -205,39 +204,45 @@ function gameOver() {
 function levelComplete() {
     resetBall.call(this);
     createBricks.call(this);
+    this.scene.restart();
 }
 
 function showMainMenu() {
-    gameState = 'mainMenu';
+    if (gameState !== 'mainMenu') {
+        gameState = 'mainMenu';
 
-    // 메인 메뉴 버튼만 표시
-    startButton.setVisible(true);
-    creditsButton.setVisible(true);
+        // 메인 메뉴 버튼만 표시
+        startButton.setVisible(true);
+        creditsButton.setVisible(true);
+        this.children.bringToTop(startButton);
+        this.children.bringToTop(creditsButton);
 
-    // 다른 모든 게임 요소 숨기기
-    hideGameElements();
-
-    // 배경 색상 설정 (선택사항)
-    this.cameras.main.setBackgroundColor('#000000');
+        // 다른 모든 게임 요소 숨기기
+        hideGameElements();
+    }
 }
 
 function startGame() {
-    gameState = 'playing';
-    startButton.setVisible(false);
-    creditsButton.setVisible(false);
-    scoreText.setVisible(true);
-    paddle.setVisible(true);
-    ball.setVisible(true);
-    bricks.setVisible(true);
-    resetGame.call(this);
+    if (gameState === 'mainMenu') {
+        gameState = 'playing';
+        startButton.setVisible(false);
+        creditsButton.setVisible(false);
+        scoreText.setVisible(true);
+        paddle.setVisible(true);
+        ball.setVisible(true);
+        bricks.setVisible(true);
+        resetGame.call(this);
+    }
 }
 
 function showCredits() {
-    gameState = 'credits';
-    startButton.setVisible(false);
-    creditsButton.setVisible(false);
-    creditsText.setVisible(true);
-    backButton.setVisible(true);
+    if (gameState === 'mainMenu') {
+        gameState = 'credits';
+        startButton.setVisible(false);
+        creditsButton.setVisible(false);
+        creditsText.setVisible(true);
+        backButton.setVisible(true);
+    }
 }
 
 function resetGame() {
@@ -255,28 +260,46 @@ function togglePause() {
         pauseText.setVisible(true);
         continueButton.setVisible(true);
         quitButton.setVisible(true);
+        startButton.setVisible(false);
+        creditsButton.setVisible(false);
     } else if (gameState === 'paused') {
         resumeGame.call(this);
     }
 }
 
 function resumeGame() {
-    if (gameState === 'paused' || gameState === 'gameOver') {
+    if (gameState === 'paused') {
         gameState = 'playing';
         ball.body.setVelocity(75, -300);
         pauseText.setVisible(false);
+        continueButton.setVisible(false);
+        quitButton.setVisible(false);
+        startButton.setVisible(false);
+        creditsButton.setVisible(false);
+    } else if (gameState === 'gameOver') {
+        gameState = 'playing';
+        ball.body.setVelocity(75, -300);
         gameOverText.setVisible(false);
         finalScoreText.setVisible(false);
         continueButton.setVisible(false);
         quitButton.setVisible(false);
-        if (gameState === 'gameOver') {
-            resetGame.call(this);
-        }
+        resetGame.call(this);
     }
 }
 
 function quitToMainMenu() {
-    restartGame.call(this);
+    // 게임 상태 초기화
+    resetGameObjects.call(this);
+
+    // 메인 메뉴 버튼만 표시
+    startButton.setVisible(true);
+    creditsButton.setVisible(true);
+
+    // 다른 모든 게임 요소 숨기기
+    hideGameElements();
+
+    // 게임 상태 변경
+    gameState = 'mainMenu';
 }
 
 function resetGameObjects() {
@@ -314,12 +337,4 @@ function hideGameElements() {
     continueButton.setVisible(false);
     quitButton.setVisible(false);
     backButton.setVisible(false);
-}
-
-function restartGame() {
-    // 게임 상태 초기화
-    resetGameObjects.call(this);
-    
-    // Phaser 씬 재시작
-    this.scene.restart();
 }
