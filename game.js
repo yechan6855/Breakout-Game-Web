@@ -337,4 +337,4 @@ function hideGameElements() {
     continueButton.setVisible(false);
     quitButton.setVisible(false);
     backButton.setVisible(false);
-}
+} 
